@@ -3,7 +3,7 @@
  * Plugin Name: Product Showcase Cards
  * Plugin URI: https://cordesprinting.com
  * Description: A flexible card-based showcase system for displaying products, services, or content with images, titles, descriptions, and links.
- * Version: 2.0.0
+ * Version: 2.1.0
  * Author: Cliff Cordes
  * Author URI: https://cordesprinting.com
  * License: GPL v2 or later
@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('PSC_VERSION', '2.0.0');
+define('PSC_VERSION', '2.1.0');
 define('PSC_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('PSC_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -151,6 +151,7 @@ class Product_Showcase_Cards {
         $body_font_weight = get_post_meta($post->ID, '_psc_body_font_weight', true) ?: self::DEFAULT_BODY_FONT_WEIGHT;
         $body_font_size = get_post_meta($post->ID, '_psc_body_font_size', true) ?: '';
         $enable_category_tabs = get_post_meta($post->ID, '_psc_enable_category_tabs', true);
+        $enable_all_tab = get_post_meta($post->ID, '_psc_enable_all_tab', true);
         $tab_color_inactive = get_post_meta($post->ID, '_psc_tab_color_inactive', true) ?: self::DEFAULT_TAB_COLOR_INACTIVE;
         $tab_color_hover = get_post_meta($post->ID, '_psc_tab_color_hover', true) ?: self::DEFAULT_TAB_COLOR_HOVER;
         $tab_color_active = get_post_meta($post->ID, '_psc_tab_color_active', true) ?: self::DEFAULT_TAB_COLOR_ACTIVE;
@@ -184,9 +185,17 @@ class Product_Showcase_Cards {
                 </div>
 
                 <div class="psc-setting-row">
+                    <label for="psc_enable_all_tab">
+                        <input type="checkbox" name="psc_enable_all_tab" id="psc_enable_all_tab" value="1" <?php checked($enable_all_tab, '1'); ?>>
+                        Enable "All" Tab
+                    </label>
+                    <p class="description" style="margin-top: 5px;">When on, an "All" tab is added automatically as the default and shows every item. When off, the first listed category is the default and items only appear in categories they're assigned to.</p>
+                </div>
+
+                <div class="psc-setting-row">
                     <label for="psc_display_categories">Display Categories:</label>
-                    <input type="text" name="psc_display_categories" id="psc_display_categories" value="<?php echo esc_attr($display_categories); ?>" placeholder="All, Most Popular, Glass Printing, Cartons" style="max-width: 400px;">
-                    <p class="description" style="margin-top: 5px;">Comma-separated list of categories to show as tabs</p>
+                    <input type="text" name="psc_display_categories" id="psc_display_categories" value="<?php echo esc_attr($display_categories); ?>" placeholder="Most Popular, Glass Printing, Cartons" style="max-width: 400px;">
+                    <p class="description" style="margin-top: 5px;">Comma-separated list of categories to show as tabs (do not include "All" here — use the toggle above)</p>
                 </div>
 
                 <div class="psc-setting-row">
@@ -626,6 +635,12 @@ class Product_Showcase_Cards {
             delete_post_meta($post_id, '_psc_enable_category_tabs');
         }
 
+        if (isset($_POST['psc_enable_all_tab'])) {
+            update_post_meta($post_id, '_psc_enable_all_tab', '1');
+        } else {
+            delete_post_meta($post_id, '_psc_enable_all_tab');
+        }
+
         if (isset($_POST['psc_display_categories'])) {
             update_post_meta($post_id, '_psc_display_categories', sanitize_text_field($_POST['psc_display_categories']));
         }
@@ -716,6 +731,7 @@ class Product_Showcase_Cards {
         $body_font_weight = get_post_meta($post_id, '_psc_body_font_weight', true) ?: self::DEFAULT_BODY_FONT_WEIGHT;
         $body_font_size = get_post_meta($post_id, '_psc_body_font_size', true) ?: '';
         $enable_category_tabs = get_post_meta($post_id, '_psc_enable_category_tabs', true);
+        $enable_all_tab = get_post_meta($post_id, '_psc_enable_all_tab', true);
         $tab_color_inactive = get_post_meta($post_id, '_psc_tab_color_inactive', true) ?: self::DEFAULT_TAB_COLOR_INACTIVE;
         $tab_color_hover = get_post_meta($post_id, '_psc_tab_color_hover', true) ?: self::DEFAULT_TAB_COLOR_HOVER;
         $tab_color_active = get_post_meta($post_id, '_psc_tab_color_active', true) ?: self::DEFAULT_TAB_COLOR_ACTIVE;
@@ -735,6 +751,14 @@ class Product_Showcase_Cards {
         $tabs = array();
         if ($enable_category_tabs && !empty($display_categories)) {
             $tabs = array_map('trim', explode(',', $display_categories));
+            // Drop any user-typed "All" entries — the "All" tab is controlled by the toggle
+            $tabs = array_values(array_filter($tabs, function($t) {
+                return strtolower($t) !== 'all' && $t !== '';
+            }));
+            // Prepend a real "All" tab when the toggle is on
+            if ($enable_all_tab) {
+                array_unshift($tabs, 'All');
+            }
         }
 
         // Generate unique ID for this showcase instance

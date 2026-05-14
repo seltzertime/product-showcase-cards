@@ -122,12 +122,20 @@ jQuery(document).ready(function($) {
             }
         });
 
-        // If first tab is hidden, activate the first visible tab
+        // If first tab is hidden, activate the first visible tab.
+        // Otherwise, run the filter for the active tab on load — without this,
+        // items render unfiltered in DOM order until a tab is clicked, which
+        // means non-"All" first tabs would still show every item on page load.
         const $firstTab = $tabs.first();
         if ($firstTab.is(':hidden')) {
             const $firstVisibleTab = $tabs.filter(':visible').first();
             if ($firstVisibleTab.length) {
                 $firstVisibleTab.trigger('click');
+            }
+        } else {
+            const $activeTab = $tabs.filter('.psc-tab-active').first();
+            if ($activeTab.length) {
+                filterItemsByCategory($activeTab);
             }
         }
     });

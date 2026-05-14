@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.1.0] - 2026-05-14
+
+### Added
+- **"Enable All Tab" setting** in Layout & Structure. When on, an "All" tab is automatically added as the first/default tab and shows every item. When off, no "All" tab is shown and the first listed category becomes the default.
+
+### Fixed
+- **Initial page load no longer shows every item when "All" is off.** Previously, the first tab's filter only ran on click, so non-"All" first tabs displayed all items until a tab was clicked. The active tab is now applied on page load.
+- Stray "All" entries typed into the Display Categories field are now ignored — the "All" tab is controlled exclusively by the toggle.
+
+### Behavior notes
+- Items with an empty Categories field will not appear when "All" is off — they need at least one category to be visible in any tab.
+
+---
+
 ## [2.0.0] - 2025-01-09
 
 ### 🎉 Major Release - Security, Accessibility & UX Overhaul
