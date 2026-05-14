@@ -2,6 +2,112 @@ jQuery(document).ready(function($) {
     'use strict';
 
     /**
+     * Build a mobile <select> dropdown that mirrors category tabs.
+     * Hidden on desktop via CSS; revealed at narrow widths to replace
+     * the horizontally-scrolling tab row with a single native picker.
+     */
+    function buildMobileSelect($showcase) {
+        var $tabs = $showcase.find('.psc-category-tab');
+        if (!$tabs.length) return;
+        if ($showcase.find('.psc-mobile-select-wrapper').length) return;
+
+        var $wrapper = $('<div class="psc-mobile-select-wrapper" aria-hidden="false"></div>');
+        var $select = $('<select class="psc-mobile-select" aria-label="Filter by category"></select>');
+
+        $tabs.each(function() {
+            var $tab = $(this);
+            var $opt = $('<option></option>')
+                .val($tab.data('category'))
+                .text($tab.text().trim());
+            if ($tab.hasClass('psc-tab-active')) $opt.prop('selected', true);
+            $select.append($opt);
+        });
+
+        $select.on('change', function() {
+            var val = $(this).val();
+            var $target = $showcase.find('.psc-category-tab').filter(function() {
+                return $(this).data('category') === val;
+            }).first();
+            if ($target.length) $target.trigger('click');
+        });
+
+        $wrapper.append($select);
+        $showcase.find('.psc-category-tabs').after($wrapper);
+    }
+
+    /**
+     * Recalculate Boxes borders after filtering
+     * Since :nth-child counts hidden elements, we need JS to fix borders
+     * when category tabs show/hide items in Boxes style.
+     * When all items are visible, clear inline styles so CSS :nth-child takes over.
+     */
+    function recalcBoxesBorders($showcase) {
+        // Only applies to Boxes style
+        if (!$showcase.hasClass('psc-style-boxes')) return;
+
+        var $allItems = $showcase.find('.psc-item');
+        var $visibleItems = $allItems.filter(':visible');
+        var $hiddenItems = $allItems.filter(':hidden');
+
+        // If all items are visible, clear inline border styles and let CSS handle it
+        if ($hiddenItems.length === 0) {
+            $allItems.css({
+                'border-top': '',
+                'border-left': '',
+                'border-right': '',
+                'border-bottom': '',
+                'border': ''
+            });
+            return;
+        }
+
+        // Get current column count based on viewport.
+        // Must match the CSS breakpoints in frontend.css:
+        //   <=768px  -> 2 columns (was 1; we changed it for cleaner mobile layout)
+        //   <=1024px -> 2 columns
+        //   else     -> grid's data-items-per-row
+        var cols = parseInt($showcase.attr('data-items-per-row')) || 4;
+        var viewportWidth = $(window).width();
+        if (viewportWidth <= 1024) {
+            cols = 2;
+        }
+
+        // Get border style from CSS custom properties on the wrapper
+        var wrapperStyle = $showcase[0].style;
+        var borderColor = wrapperStyle.getPropertyValue('--psc-border-color').trim() || '#000';
+        var borderWidth = wrapperStyle.getPropertyValue('--psc-border-width').trim() || '1px';
+        var borderVal = borderWidth + ' solid ' + borderColor;
+
+        // Apply borders to visible items based on their visual position
+        $visibleItems.each(function(index) {
+            var $item = $(this);
+
+            // All items get right + bottom
+            $item.css('border-right', borderVal);
+            $item.css('border-bottom', borderVal);
+
+            // First row gets top
+            if (index < cols) {
+                $item.css('border-top', borderVal);
+            } else {
+                $item.css('border-top', 'none');
+            }
+
+            // First column gets left
+            if (index % cols === 0) {
+                $item.css('border-left', borderVal);
+            } else {
+                $item.css('border-left', 'none');
+            }
+        });
+
+        // Hidden items: remove all borders
+        $hiddenItems.css({
+            'border': 'none'
+        });
+    }
+
+    /**
      * Category Tab Filtering
      */
     function filterItemsByCategory($button) {
@@ -45,6 +151,15 @@ jQuery(document).ready(function($) {
             }
         });
 
+        // Recalculate Boxes borders after filtering
+        recalcBoxesBorders($showcase);
+
+        // Keep the mobile dropdown in sync with the active tab
+        var $select = $showcase.find('.psc-mobile-select');
+        if ($select.length && $select.val() !== category) {
+            $select.val(category);
+        }
+
         // Restore scroll position to prevent page jump
         window.scrollTo(0, scrollY);
     }
@@ -85,12 +200,28 @@ jQuery(document).ready(function($) {
     });
 
     /**
+     * Recalculate Boxes borders on window resize (column count may change)
+     */
+    var resizeTimer;
+    $(window).on('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+            $('.psc-showcase.psc-style-boxes').each(function() {
+                recalcBoxesBorders($(this));
+            });
+        }, 150);
+    });
+
+    /**
      * Hide empty categories on page load
      */
     $('.psc-showcase').each(function() {
         const $showcase = $(this);
         const $tabs = $showcase.find('.psc-category-tab');
         const $items = $showcase.find('.psc-item');
+
+        // Build the mobile dropdown (hidden on desktop via CSS).
+        buildMobileSelect($showcase);
 
         // Check each tab
         $tabs.each(function() {

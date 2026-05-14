@@ -42,6 +42,11 @@ class Product_Showcase_Cards {
     const DEFAULT_TAB_UNDERLINE_HOVER = '#cccccc';
     const DEFAULT_TAB_UNDERLINE_ACTIVE = '#333333';
     const DEFAULT_READ_MORE_TEXT = 'Read more';
+    const DEFAULT_DISPLAY_STYLE = 'cards';
+    const DEFAULT_BORDER_COLOR = '#000000';
+    const DEFAULT_BORDER_WIDTH = 1;
+    const DEFAULT_BOXES_BG_COLOR = '#ffffff';
+    const DEFAULT_BOXES_TEXT_COLOR = '#2E2E2E';
 
     /**
      * Constructor
@@ -162,8 +167,24 @@ class Product_Showcase_Cards {
         $masonry_layout = get_post_meta($post->ID, '_psc_masonry_layout', true);
         $global_bg_color = get_post_meta($post->ID, '_psc_global_bg_color', true) ?: '';
         $global_text_color = get_post_meta($post->ID, '_psc_global_text_color', true) ?: '';
+        $display_style = get_post_meta($post->ID, '_psc_display_style', true) ?: self::DEFAULT_DISPLAY_STYLE;
+        $border_color = get_post_meta($post->ID, '_psc_border_color', true) ?: self::DEFAULT_BORDER_COLOR;
+        $border_width = get_post_meta($post->ID, '_psc_border_width', true) ?: self::DEFAULT_BORDER_WIDTH;
         ?>
         <div class="psc-settings-container">
+            <!-- Display Style -->
+            <h3 class="psc-section-header">Display Style</h3>
+            <div class="psc-settings-grid">
+                <div class="psc-setting-row">
+                    <label for="psc_display_style">Style:</label>
+                    <select name="psc_display_style" id="psc_display_style">
+                        <option value="cards" <?php selected($display_style, 'cards'); ?>>Cards</option>
+                        <option value="boxes" <?php selected($display_style, 'boxes'); ?>>Boxes</option>
+                    </select>
+                    <p class="description" style="margin-top: 5px;">Cards: Rounded corners with colored content areas. Boxes: Clean bordered grid with edge-to-edge images.</p>
+                </div>
+            </div>
+
             <!-- Layout & Structure -->
             <h3 class="psc-section-header">Layout & Structure</h3>
             <div class="psc-settings-grid">
@@ -198,7 +219,7 @@ class Product_Showcase_Cards {
                     <p class="description" style="margin-top: 5px;">Comma-separated list of categories to show as tabs (do not include "All" here — use the toggle above)</p>
                 </div>
 
-                <div class="psc-setting-row">
+                <div class="psc-setting-row" data-psc-cards-only="1">
                     <label for="psc_masonry_layout">
                         <input type="checkbox" name="psc_masonry_layout" id="psc_masonry_layout" value="1" <?php checked($masonry_layout, '1'); ?>>
                         Masonry Layout (Variable Heights)
@@ -317,17 +338,37 @@ class Product_Showcase_Cards {
                 </div>
             </div>
 
-            <!-- Effects -->
-            <h3 class="psc-section-header">Effects</h3>
-            <div class="psc-settings-grid">
-                <div class="psc-setting-row">
-                    <label for="psc_hover_effect">Hover Effect:</label>
-                    <select name="psc_hover_effect" id="psc_hover_effect">
-                        <option value="none" <?php selected($hover_effect, 'none'); ?>>None</option>
-                        <option value="lift" <?php selected($hover_effect, 'lift'); ?>>Subtle Lift</option>
-                        <option value="zoom" <?php selected($hover_effect, 'zoom'); ?>>Image Zoom</option>
-                        <option value="lift-zoom" <?php selected($hover_effect, 'lift-zoom'); ?>>Lift + Zoom</option>
-                    </select>
+            <!-- Effects (Cards Only) -->
+            <div data-psc-cards-only="1">
+                <h3 class="psc-section-header">Effects</h3>
+                <div class="psc-settings-grid">
+                    <div class="psc-setting-row">
+                        <label for="psc_hover_effect">Hover Effect:</label>
+                        <select name="psc_hover_effect" id="psc_hover_effect">
+                            <option value="none" <?php selected($hover_effect, 'none'); ?>>None</option>
+                            <option value="lift" <?php selected($hover_effect, 'lift'); ?>>Subtle Lift</option>
+                            <option value="zoom" <?php selected($hover_effect, 'zoom'); ?>>Image Zoom</option>
+                            <option value="lift-zoom" <?php selected($hover_effect, 'lift-zoom'); ?>>Lift + Zoom</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Border Settings (Boxes Only) -->
+            <div id="psc-boxes-settings" style="<?php echo $display_style !== 'boxes' ? 'display:none;' : ''; ?>">
+                <h3 class="psc-section-header">Border Settings</h3>
+                <div class="psc-settings-grid">
+                    <div class="psc-setting-row">
+                        <label for="psc_border_color">Border Color:</label>
+                        <input type="text" name="psc_border_color" id="psc_border_color" value="<?php echo esc_attr($border_color); ?>" class="psc-color-picker">
+                        <p class="description" style="margin-top: 5px;">Color of the grid borders</p>
+                    </div>
+
+                    <div class="psc-setting-row">
+                        <label for="psc_border_width">Border Width (px):</label>
+                        <input type="number" name="psc_border_width" id="psc_border_width" value="<?php echo esc_attr($border_width); ?>" min="1" max="10" style="max-width: 80px;">
+                        <p class="description" style="margin-top: 5px;">Width in pixels (1-10)</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -446,7 +487,7 @@ class Product_Showcase_Cards {
                     <input type="text" name="psc_items[<?php echo esc_attr($index); ?>][text_color]" value="<?php echo esc_attr($text_color); ?>" class="psc-color-picker psc-item-color-picker">
                 </div>
 
-                <div class="psc-item-field">
+                <div class="psc-item-field" data-psc-cards-only="1">
                     <label>Read More Text:</label>
                     <input type="text" name="psc_items[<?php echo esc_attr($index); ?>][read_more_text]" value="<?php echo esc_attr($read_more_text); ?>" placeholder="Read more">
                 </div>
@@ -546,6 +587,26 @@ class Product_Showcase_Cards {
 
         if (isset($_POST['psc_hover_effect'])) {
             update_post_meta($post_id, '_psc_hover_effect', sanitize_text_field($_POST['psc_hover_effect']));
+        }
+
+        // Save display style
+        if (isset($_POST['psc_display_style'])) {
+            $style = sanitize_text_field($_POST['psc_display_style']);
+            if (in_array($style, array('cards', 'boxes'))) {
+                update_post_meta($post_id, '_psc_display_style', $style);
+            }
+        }
+
+        // Save border settings (Boxes style)
+        if (isset($_POST['psc_border_color'])) {
+            $color = sanitize_hex_color($_POST['psc_border_color']);
+            update_post_meta($post_id, '_psc_border_color', $color ?: self::DEFAULT_BORDER_COLOR);
+        }
+
+        if (isset($_POST['psc_border_width'])) {
+            $width = absint($_POST['psc_border_width']);
+            $width = max(1, min(10, $width));
+            update_post_meta($post_id, '_psc_border_width', $width);
         }
 
         if (isset($_POST['psc_title_font'])) {
@@ -742,6 +803,10 @@ class Product_Showcase_Cards {
         $masonry_layout = get_post_meta($post_id, '_psc_masonry_layout', true);
         $global_bg_color = get_post_meta($post_id, '_psc_global_bg_color', true) ?: '';
         $global_text_color = get_post_meta($post_id, '_psc_global_text_color', true) ?: '';
+        $display_style = get_post_meta($post_id, '_psc_display_style', true) ?: self::DEFAULT_DISPLAY_STYLE;
+        $border_color = get_post_meta($post_id, '_psc_border_color', true) ?: self::DEFAULT_BORDER_COLOR;
+        $border_width = get_post_meta($post_id, '_psc_border_width', true) ?: self::DEFAULT_BORDER_WIDTH;
+        $is_boxes = ($display_style === 'boxes');
 
         if (empty($items)) {
             return '<p>No items to display.</p>';
@@ -767,7 +832,7 @@ class Product_Showcase_Cards {
         // Build output
         ob_start();
         ?>
-        <?php if (!empty($title_font) || !empty($title_font_weight) || !empty($title_font_size) || !empty($body_font) || !empty($body_font_weight) || !empty($body_font_size) || !empty($tab_color_inactive) || !empty($tab_color_hover) || !empty($tab_color_active) || !empty($tab_underline_hover) || !empty($tab_underline_active)): ?>
+        <?php if (!empty($title_font) || !empty($title_font_weight) || !empty($title_font_size) || !empty($body_font) || !empty($body_font_weight) || !empty($body_font_size) || !empty($tab_color_inactive) || !empty($tab_color_hover) || !empty($tab_color_active) || !empty($tab_underline_hover) || !empty($tab_underline_active) || $is_boxes): ?>
         <style>
             <?php if (!empty($title_font) || !empty($title_font_weight) || !empty($title_font_size)): ?>
             #<?php echo $showcase_id; ?> .psc-item-title {
@@ -818,11 +883,41 @@ class Product_Showcase_Cards {
                 color: <?php echo esc_attr($tab_color_active); ?> !important;
                 border-bottom-color: <?php echo esc_attr($tab_underline_active); ?> !important;
             }
+            <?php if ($is_boxes): ?>
+            /* Boxes: All items get right + bottom borders */
+            #<?php echo $showcase_id; ?> .psc-item {
+                border-right: <?php echo intval($border_width); ?>px solid <?php echo esc_attr($border_color); ?>;
+                border-bottom: <?php echo intval($border_width); ?>px solid <?php echo esc_attr($border_color); ?>;
+            }
+            /* Boxes: First row items get top border */
+            #<?php echo $showcase_id; ?> .psc-item:nth-child(-n+<?php echo intval($items_per_row); ?>) {
+                border-top: <?php echo intval($border_width); ?>px solid <?php echo esc_attr($border_color); ?>;
+            }
+            /* Boxes: First column items get left border */
+            #<?php echo $showcase_id; ?> .psc-item:nth-child(<?php echo intval($items_per_row); ?>n+1) {
+                border-left: <?php echo intval($border_width); ?>px solid <?php echo esc_attr($border_color); ?>;
+            }
+            /* Boxes: Tablet (2-col) - override first-row and first-col */
+            @media screen and (max-width: 1024px) {
+                #<?php echo $showcase_id; ?> .psc-item {
+                    border-top: none;
+                    border-left: none;
+                    border-right: <?php echo intval($border_width); ?>px solid <?php echo esc_attr($border_color); ?>;
+                    border-bottom: <?php echo intval($border_width); ?>px solid <?php echo esc_attr($border_color); ?>;
+                }
+                #<?php echo $showcase_id; ?> .psc-item:nth-child(-n+2) {
+                    border-top: <?php echo intval($border_width); ?>px solid <?php echo esc_attr($border_color); ?>;
+                }
+                #<?php echo $showcase_id; ?> .psc-item:nth-child(2n+1) {
+                    border-left: <?php echo intval($border_width); ?>px solid <?php echo esc_attr($border_color); ?>;
+                }
+            }
+            <?php endif; ?>
         </style>
         <?php endif; ?>
         <?php
         ?>
-        <div id="<?php echo $showcase_id; ?>" class="psc-showcase psc-hover-<?php echo esc_attr($hover_effect); ?><?php echo $masonry_layout ? ' psc-layout-masonry' : ''; ?>" data-items-per-row="<?php echo esc_attr($items_per_row); ?>">
+        <div id="<?php echo $showcase_id; ?>" class="psc-showcase psc-style-<?php echo esc_attr($display_style); ?><?php echo !$is_boxes ? ' psc-hover-' . esc_attr($hover_effect) : ''; ?><?php echo ($masonry_layout && !$is_boxes) ? ' psc-layout-masonry' : ''; ?>" data-items-per-row="<?php echo esc_attr($items_per_row); ?>"<?php if ($is_boxes): ?> style="--psc-border-color: <?php echo esc_attr($border_color); ?>; --psc-border-width: <?php echo intval($border_width); ?>px;"<?php endif; ?>>
             <?php if (!empty($tabs)): ?>
             <div class="psc-category-tabs psc-align-<?php echo esc_attr($tab_alignment); ?>" role="tablist" aria-label="Product categories">
                 <?php foreach ($tabs as $index => $tab): ?>
@@ -839,7 +934,7 @@ class Product_Showcase_Cards {
                 <?php endforeach; ?>
             </div>
             <?php endif; ?>
-            <div class="psc-showcase-grid" data-columns="<?php echo esc_attr($items_per_row); ?>" style="grid-template-columns: repeat(<?php echo esc_attr($items_per_row); ?>, 1fr);">
+            <div class="psc-showcase-grid" data-columns="<?php echo esc_attr($items_per_row); ?>" style="grid-template-columns: repeat(<?php echo esc_attr($items_per_row); ?>, 1fr);<?php echo $is_boxes ? ' gap: 0;' : ''; ?>">
                 <?php foreach ($items as $item): ?>
                     <?php
                     $image_id = !empty($item['image_id']) ? $item['image_id'] : 0;
@@ -852,8 +947,15 @@ class Product_Showcase_Cards {
 
                     // Get item-specific colors and text, or use defaults
                     // Global colors override individual card colors
-                    $item_bg_color = !empty($global_bg_color) ? $global_bg_color : (!empty($item['bg_color']) ? $item['bg_color'] : $bg_color);
-                    $item_text_color = !empty($global_text_color) ? $global_text_color : (!empty($item['text_color']) ? $item['text_color'] : $text_color);
+                    if ($is_boxes) {
+                        // Boxes: default to white bg / dark text
+                        $item_bg_color = !empty($global_bg_color) ? $global_bg_color : (!empty($item['bg_color']) ? $item['bg_color'] : self::DEFAULT_BOXES_BG_COLOR);
+                        $item_text_color = !empty($global_text_color) ? $global_text_color : (!empty($item['text_color']) ? $item['text_color'] : self::DEFAULT_BOXES_TEXT_COLOR);
+                    } else {
+                        // Cards: default to green bg / dark text
+                        $item_bg_color = !empty($global_bg_color) ? $global_bg_color : (!empty($item['bg_color']) ? $item['bg_color'] : $bg_color);
+                        $item_text_color = !empty($global_text_color) ? $global_text_color : (!empty($item['text_color']) ? $item['text_color'] : $text_color);
+                    }
                     $item_read_more = !empty($item['read_more_text']) ? $item['read_more_text'] : self::DEFAULT_READ_MORE_TEXT;
                     $item_categories = !empty($item['categories']) ? $item['categories'] : '';
                     ?>
@@ -875,7 +977,9 @@ class Product_Showcase_Cards {
                             <div class="psc-item-content" style="background-color: <?php echo esc_attr($item_bg_color); ?>; color: <?php echo esc_attr($item_text_color); ?>;">
                                 <h3 class="psc-item-title"><?php echo esc_html($item['title']); ?></h3>
                                 <p class="psc-item-description"><?php echo esc_html($item['description']); ?></p>
+                                <?php if (!$is_boxes): ?>
                                 <span class="psc-read-more"><?php echo esc_html($item_read_more); ?></span>
+                                <?php endif; ?>
                             </div>
                         </a>
                     </div>
