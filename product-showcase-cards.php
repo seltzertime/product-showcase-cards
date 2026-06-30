@@ -976,7 +976,9 @@ class Product_Showcase_Cards {
                             </div>
                             <div class="psc-item-content" style="background-color: <?php echo esc_attr($item_bg_color); ?>; color: <?php echo esc_attr($item_text_color); ?>;">
                                 <h3 class="psc-item-title"><?php echo esc_html($item['title']); ?></h3>
+                                <?php if (!empty($item['description'])): ?>
                                 <p class="psc-item-description"><?php echo esc_html($item['description']); ?></p>
+                                <?php endif; ?>
                                 <?php if (!$is_boxes): ?>
                                 <span class="psc-read-more"><?php echo esc_html($item_read_more); ?></span>
                                 <?php endif; ?>
