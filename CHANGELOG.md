@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.1.1] - 2026-06-30
+
+### Fixed
+- **Empty description no longer leaves a gap.** The description `<p>` was rendered unconditionally, so cards with a blank description showed an empty paragraph (with its margin), leaving a small dead gap between the title and "Read more." The paragraph is now only output when the item has description text — blanking a description in admin yields a clean title-only card. Per-card; cards that have text are unchanged.
+
+---
+
 ## [2.1.0] - 2026-05-14
 
 ### Added

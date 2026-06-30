@@ -3,7 +3,7 @@
  * Plugin Name: Product Showcase Cards
  * Plugin URI: https://cordesprinting.com
  * Description: A flexible card-based showcase system for displaying products, services, or content with images, titles, descriptions, and links.
- * Version: 2.1.0
+ * Version: 2.1.1
  * Author: Cliff Cordes
  * Author URI: https://cordesprinting.com
  * License: GPL v2 or later
@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('PSC_VERSION', '2.1.0');
+define('PSC_VERSION', '2.1.1');
 define('PSC_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('PSC_PLUGIN_URL', plugin_dir_url(__FILE__));
 
