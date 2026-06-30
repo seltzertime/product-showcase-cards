@@ -3,7 +3,7 @@
  * Plugin Name: Product Showcase Cards
  * Plugin URI: https://cordesprinting.com
  * Description: A flexible card-based showcase system for displaying products, services, or content with images, titles, descriptions, and links.
- * Version: 2.1.1
+ * Version: 2.2.0
  * Author: Cliff Cordes
  * Author URI: https://cordesprinting.com
  * License: GPL v2 or later
@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('PSC_VERSION', '2.1.1');
+define('PSC_VERSION', '2.2.0');
 define('PSC_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('PSC_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -157,6 +157,9 @@ class Product_Showcase_Cards {
         $body_font_size = get_post_meta($post->ID, '_psc_body_font_size', true) ?: '';
         $enable_category_tabs = get_post_meta($post->ID, '_psc_enable_category_tabs', true);
         $enable_all_tab = get_post_meta($post->ID, '_psc_enable_all_tab', true);
+        // Show descriptions: default ON. Stored as '0' only when explicitly turned off.
+        $show_descriptions = get_post_meta($post->ID, '_psc_show_descriptions', true);
+        $show_descriptions = ($show_descriptions === '0') ? '0' : '1';
         $tab_color_inactive = get_post_meta($post->ID, '_psc_tab_color_inactive', true) ?: self::DEFAULT_TAB_COLOR_INACTIVE;
         $tab_color_hover = get_post_meta($post->ID, '_psc_tab_color_hover', true) ?: self::DEFAULT_TAB_COLOR_HOVER;
         $tab_color_active = get_post_meta($post->ID, '_psc_tab_color_active', true) ?: self::DEFAULT_TAB_COLOR_ACTIVE;
@@ -211,6 +214,15 @@ class Product_Showcase_Cards {
                         Enable "All" Tab
                     </label>
                     <p class="description" style="margin-top: 5px;">When on, an "All" tab is added automatically as the default and shows every item. When off, the first listed category is the default and items only appear in categories they're assigned to.</p>
+                </div>
+
+                <div class="psc-setting-row">
+                    <label for="psc_show_descriptions">
+                        <input type="hidden" name="psc_show_descriptions" value="0">
+                        <input type="checkbox" name="psc_show_descriptions" id="psc_show_descriptions" value="1" <?php checked($show_descriptions, '1'); ?>>
+                        Show Descriptions
+                    </label>
+                    <p class="description" style="margin-top: 5px;">When off, item descriptions are hidden for this showcase (titles only) — your description text is kept, just not displayed. Turn on to show descriptions again. On by default.</p>
                 </div>
 
                 <div class="psc-setting-row">
@@ -702,6 +714,11 @@ class Product_Showcase_Cards {
             delete_post_meta($post_id, '_psc_enable_all_tab');
         }
 
+        // Show descriptions toggle. A hidden field guarantees a value is posted:
+        // '1' when the box is checked, '0' when unchecked.
+        $show_descriptions = (isset($_POST['psc_show_descriptions']) && $_POST['psc_show_descriptions'] === '1') ? '1' : '0';
+        update_post_meta($post_id, '_psc_show_descriptions', $show_descriptions);
+
         if (isset($_POST['psc_display_categories'])) {
             update_post_meta($post_id, '_psc_display_categories', sanitize_text_field($_POST['psc_display_categories']));
         }
@@ -793,6 +810,8 @@ class Product_Showcase_Cards {
         $body_font_size = get_post_meta($post_id, '_psc_body_font_size', true) ?: '';
         $enable_category_tabs = get_post_meta($post_id, '_psc_enable_category_tabs', true);
         $enable_all_tab = get_post_meta($post_id, '_psc_enable_all_tab', true);
+        // Show descriptions: default ON unless explicitly turned off ('0').
+        $show_descriptions = (get_post_meta($post_id, '_psc_show_descriptions', true) !== '0');
         $tab_color_inactive = get_post_meta($post_id, '_psc_tab_color_inactive', true) ?: self::DEFAULT_TAB_COLOR_INACTIVE;
         $tab_color_hover = get_post_meta($post_id, '_psc_tab_color_hover', true) ?: self::DEFAULT_TAB_COLOR_HOVER;
         $tab_color_active = get_post_meta($post_id, '_psc_tab_color_active', true) ?: self::DEFAULT_TAB_COLOR_ACTIVE;
@@ -976,7 +995,7 @@ class Product_Showcase_Cards {
                             </div>
                             <div class="psc-item-content" style="background-color: <?php echo esc_attr($item_bg_color); ?>; color: <?php echo esc_attr($item_text_color); ?>;">
                                 <h3 class="psc-item-title"><?php echo esc_html($item['title']); ?></h3>
-                                <?php if (!empty($item['description'])): ?>
+                                <?php if ($show_descriptions && !empty($item['description'])): ?>
                                 <p class="psc-item-description"><?php echo esc_html($item['description']); ?></p>
                                 <?php endif; ?>
                                 <?php if (!$is_boxes): ?>
